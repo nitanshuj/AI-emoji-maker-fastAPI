@@ -23,3 +23,6 @@ class UserProfile(BaseModel):
     id: str
     email: str
     full_name: Optional[str] = None
+    plan_type: str = "Free"
+    generations_used: int = 0
+    max_generations: int = 10

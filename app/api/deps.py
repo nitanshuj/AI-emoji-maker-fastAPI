@@ -7,7 +7,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 
 def get_current_user(
@@ -26,36 +26,33 @@ def get_current_user(
                 detail="Invalid or expired authentication credentials",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        
+
         user_data = user_resp.user
         meta = user_data.user_metadata or {}
+
+        # Build full_name from metadata fields
         fn = meta.get("first_name") or (meta.get("name", "").split(" ")[0] if meta.get("name") else None)
         ln = meta.get("last_name") or (meta.get("name", "").split(" ")[1] if meta.get("name") and " " in meta.get("name") else None)
+        full_name_parts = [p for p in [fn, ln] if p]
+        full_name = meta.get("full_name") or (" ".join(full_name_parts) if full_name_parts else None)
 
         profile = UserProfile(
             id=str(user_data.id),
             email=str(user_data.email),
-            first_name=fn,
-            last_name=ln
+            full_name=full_name,
         )
-        
+
         # Ensure user profile row exists in the database
-        SupabaseService().ensure_user_profile(profile.id, profile.email, profile.first_name, profile.last_name)
-        
+        display_name = full_name or profile.email.split("@")[0]
+        SupabaseService().ensure_user_profile(profile.id, profile.email, display_name)
+
         return profile
 
+    except HTTPException:
+        # Re-raise HTTPExceptions without wrapping them in the generic auth error
+        raise
     except Exception as e:
         logger.error(f"Authentication validation error: {e}")
-        # When running in local development mode with example credentials, allow simulated user
-        settings = str(supabase.supabase_url if hasattr(supabase, "supabase_url") else "")
-        if "example.supabase.co" in settings or token == "mock-dev-token":
-            return UserProfile(
-                id="mock-uuid-1234",
-                email="alex.patel@acmecorp.com",
-                first_name="Alex",
-                last_name="Patel"
-            )
-            
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication failed. Please verify your token.",

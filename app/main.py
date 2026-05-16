@@ -1,6 +1,6 @@
 from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.routes import auth, emoji
+from app.api.routes import auth, emoji, user
 from app.config import get_settings
 import logging
 
@@ -32,6 +32,7 @@ app.add_middleware(
 # Register routers
 app.include_router(auth.router, prefix="/api")
 app.include_router(emoji.router, prefix="/api")
+app.include_router(user.router, prefix="/api")
 
 
 @app.get("/", tags=["System Health"], status_code=status.HTTP_200_OK)
