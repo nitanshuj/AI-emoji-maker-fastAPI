@@ -1,0 +1,17 @@
+[project]
+name = "ai-emoji-maker-fastapi"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.109.0",
+    "uvicorn>=0.27.0",
+    "pydantic[email]>=2.6.0",
+    "pydantic-settings>=2.1.0",
+    "supabase>=2.3.0",
+    "httpx>=0.26.0",
+    "python-dotenv>=1.0.0",
+    "pillow>=10.2.0",
+    "python-multipart>=0.0.28",
+]
