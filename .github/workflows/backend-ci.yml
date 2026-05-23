@@ -1,0 +1,50 @@
+name: Backend CI
+
+on:
+  push:
+    branches: ["main", "dev"]
+    paths:
+      - "AI-emoji-maker-fastAPI/**"
+      - ".github/workflows/backend-ci.yml"
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "AI-emoji-maker-fastAPI/**"
+      - ".github/workflows/backend-ci.yml"
+
+defaults:
+  run:
+    working-directory: AI-emoji-maker-fastAPI
+
+jobs:
+  lint-and-check:
+    name: Lint & Import Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: AI-emoji-maker-fastAPI/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install linting tools
+        run: pip install ruff
+
+      - name: Run Ruff linter
+        run: ruff check app/ --output-format=github
+
+      - name: Verify app imports successfully
+        # Catches syntax errors, missing modules, broken imports
+        env:
+          SUPABASE_URL: https://example.supabase.co
+          SUPABASE_ANON_KEY: example_anon_key
+          AIMLAPI_API_KEY: example_aimlapi_key
+        run: python -c "from app.main import app; print('✅ App imported successfully')"

@@ -1,0 +1,39 @@
+name: Deploy Backend to Render
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "AI-emoji-maker-fastAPI/**"
+      - ".github/workflows/backend-deploy.yml"
+  # Allow manual trigger from the GitHub Actions tab
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Trigger Render Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger Render Deploy Hook
+        # RENDER_DEPLOY_HOOK_URL is set in:
+        # GitHub repo → Settings → Secrets and variables → Actions → New repository secret
+        # Get the URL from: Render Dashboard → Your Service → Settings → Deploy Hook
+        run: |
+          echo "🚀 Triggering Render deployment..."
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            --request POST \
+            "${{ secrets.RENDER_DEPLOY_HOOK_URL }}")
+
+          if [ "$response" -eq 200 ] || [ "$response" -eq 201 ]; then
+            echo "✅ Deploy hook triggered successfully (HTTP $response)"
+          else
+            echo "❌ Deploy hook failed with HTTP $response"
+            exit 1
+          fi
+
+      - name: Wait for deployment to start
+        run: |
+          echo "⏳ Waiting 15 seconds for Render to pick up the deploy..."
+          sleep 15
+          echo "✅ Deploy queued on Render. Monitor progress at https://dashboard.render.com"
